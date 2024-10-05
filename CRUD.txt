@@ -1,0 +1,327 @@
+
+CRUD
+
+---------------
+
+1. Create
+2. Read
+3. Update
+4. Delete
+
+------------------
+
+Create New Student 
+
+Project Structure
+
+app1|____ manage.py
+    |____ app1/
+         |____ __init__.py
+	 |____ settings.py
+         |____ urls.py
+         |____ wsgl.py
+
+     ____ students/
+        |____ templates
+            |____ index.html
+            |____ create.html
+            |____ edit.html
+            |____ show.html
+        |____ migrations/
+            |____ __init__.py
+        |____ __init__.py
+        |____ admin.py
+        |____ apps.py
+        |____ models.py
+        |____ tests.py
+        |____ views.py
+
+---------------------------
+
+config database:
+
+settings.py
+
+DATABASES = {  
+    'default': {  
+        'ENGINE': 'django.db.backends.mysql',  
+        'NAME': 'crud_db',  
+        'USER':'root',  
+        'PASSWORD':'',  
+        'HOST':'localhost',  
+        'PORT':'3306'  
+    }  
+}  
+
+
+config template folder:
+
+
+-----------------------
+
+Create Model
+-----------
+
+models.py
+
+from django.db import models  
+class Student(models.Model):   
+    fullname = models.CharField(max_length=100)  
+    address = models.CharField(max_length=200) 
+    
+    class Meta:  
+        db_table = "students"  
+
+-----------------------
+
+Create ModelForm
+
+forms.py
+
+from django import forms  
+from students.models import Student  
+class StudentForm(forms.ModelForm):  
+    class Meta:  
+        model = Student  
+        fields = "__all__" 
+
+----------------------
+
+Create View Functions
+
+views.py
+--------
+
+from django.shortcuts import render, redirect  
+from students.forms import StudentForm  
+from students.models import Employee  
+
+# Create your views here.  
+def store(request):  
+    if request.method == "POST":  
+        form = StudentForm(request.POST)  
+        if form.is_valid():  
+            try:  
+                form.save()  
+                return redirect('/index')  
+            except:  
+                pass  
+    else:  
+        form = StudentForm()  
+    return render(request,'index.html',{'form':form})  
+
+def index(request):  
+    students = Student.objects.all()  
+    return render(request,"index.html",{'students':students}) 
+ 
+def edit(request, id):  
+    student = Student.objects.get(id=id)  
+    return render(request,'edit.html', {'student':student})  
+
+
+def update(request, id):  
+    student = Student.objects.get(id=id)  
+    form = StudenForm(request.POST, instance = student)  
+    if form.is_valid():  
+        form.save()  
+        return redirect("/index")  
+    return render(request, 'edit.html', {'student': student})  
+
+
+def destroy(request, id):  
+    student = Student.objects.get(id=id)  
+    student.delete()  
+    return redirect("/index")   
+
+-------------------------------------
+
+urls.py
+
+from django.contrib import admin  
+from django.urls import path  
+from students import views  
+urlpatterns = [  
+    path('admin/', admin.site.urls),  
+    path('create', views.store),  
+    path('index',views.index),  
+    path('edit/<int:id>', views.edit),  
+    path('update/<int:id>', views.update),  
+    path('delete/<int:id>', views.destroy),  
+]  
+
+
+-------------------------------
+
+index.html
+----------
+
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <title>Employee Records</title>  
+     {% load staticfiles %}  
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"/>  
+</head>  
+<body>  
+
+<div class="container text-center text-white p-5 bg-secondary">
+<h1>CRUD Example </h1>
+</div>
+<div class="container my-4">
+<a href="/create" class="btn btn-primary">Add New Record</a> 
+</div>
+
+<div class="container my-4">
+
+<table class="table table-striped table-bordered table-sm">  
+    <thead class="thead-dark">  
+    <tr>  
+        <th>Id</th>  
+        <th>Name</th>  
+        <th>Address</th>  
+        <th>Actions</th>  
+    </tr>  
+    </thead>  
+    <tbody>  
+{% for student in students %}  
+    <tr>  
+        <td>{{ student.id }}</td>  
+        <td>{{ student.fullname }}</td>  
+        <td>{{ student.address }}</td>  
+        <td>  
+            <a href="/edit/{{ student.id }}"><span class="glyphicon glyphicon-pencil" >Edit</span></a>  
+            <a href="/delete/{{ student.id }}">Delete</a>  
+        </td>  
+    </tr>  
+{% endfor %}  
+    </tbody>  
+</table>  
+
+</div>
+
+</body>  
+</html>  
+
+----------------------------
+
+create.html
+-----------
+
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <title>Index</title>  
+    {% load staticfiles %}  
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"/>  
+</head>  
+<body>  
+
+<div class="container text-center text-white p-5 bg-secondary my-4">
+<h1>CRUD Example </h1>
+</div>
+
+<div class="container my-4">
+<form method="POST" class="post-form" action="/create">  
+        {% csrf_token %}  
+    <div class="container">  
+<br>  
+    <div class="form-group row">  
+    <label class="col-sm-1 col-form-label"></label>  
+    <div class="col-sm-4">  
+    <h3>Enter Student Details</h3>  
+    </div>  
+  </div>  
+     
+  <div class="form-group row">  
+    <label class="col-sm-2 col-form-label">Student Name:</label>  
+    <div class="col-sm-4">  
+      {{ form.fullname }}  
+    </div>  
+  </div>  
+    <div class="form-group row">  
+    <label class="col-sm-2 col-form-label">Student Address:</label>  
+    <div class="col-sm-4">  
+      {{ form.address }}  
+    </div>  
+  </div>  
+    
+    <div class="form-group row">  
+    <label class="col-sm-1 col-form-label"></label>  
+    <div class="col-sm-4">  
+    <button type="submit" class="btn btn-primary">Submit</button>  
+    </div>  
+  </div>  
+    </div>  
+</form> 
+</div>
+ 
+</body>  
+</html>  
+
+--------------------------
+
+edit.html
+---------
+
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <title>Index</title>  
+    {% load staticfiles %}  
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"/>  
+</head>  
+<body>  
+
+<div class="container text-center text-white p-5 bg-secondary my-4">
+<h1>CRUD Example </h1>
+</div>
+
+<div class="container my-4">
+<form method="POST" class="post-form" action="/update/{{student.id}}">  
+        {% csrf_token %}  
+    <div class="container">  
+<br>  
+    <div class="form-group row">  
+    <label class="col-sm-1 col-form-label"></label>  
+    <div class="col-sm-4">  
+    <h3>Update Details</h3>  
+    </div>  
+  </div>  
+    
+  <div class="form-group row">  
+    <label class="col-sm-2 col-form-label">Student Name:</label>  
+    <div class="col-sm-4">  
+        <input type="text" name="fullname" id="fullname" required maxlength="100" value="{{ student.fullname }}" />  
+    </div>  
+  </div>  
+    <div class="form-group row">  
+    <label class="col-sm-2 col-form-label">Student Address:</label>  
+    <div class="col-sm-4">  
+        <input type="text" name="address" id="address" required maxlength="254" value="{{ student.address }}" />  
+    </div>  
+  </div>  
+    
+    <div class="form-group row">  
+    <label class="col-sm-1 col-form-label"></label>  
+    <div class="col-sm-4">  
+    <button type="submit" class="btn btn-success"> Update</button>  
+    </div>  
+  </div>  
+    </div>  
+</form> 
+</div>
+ 
+</body>  
+</html>  
+
+---------------------
+
+show.html
+--------
+
+
+
+

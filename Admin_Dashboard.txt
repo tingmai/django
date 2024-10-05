@@ -1,0 +1,106 @@
+Admin Dashboard
+-----------------
+
+- create admin superuser account
+- create models
+- CRUD
+
+Config url
+----------
+
+app1/app1/urls.py
+
+from django.contrib import admin
+from django.urls import include, path
+
+urlpatterns = [
+    path('', include('members.urls')),
+    path('admin/', admin.site.urls),
+]
+
+
+-----------------------
+
+Run the server
+
+[command]:
+py manage.py runserver
+
+-----------------------
+
+Browse to the admin page
+
+http://127.0.0.1:8000/admin/
+
+you will see the admin login screen
+[screenshot]
+
+-----------------------------
+
+Create Admin User
+
+[command]:
+py manage.py createsuperuser
+
+Username: johndoe
+Email address: johndoe@dummymail.com
+Password:
+Password (again):
+This password is too short. It must contain at least 8 characters.
+This password is too common.
+This password is entirely numeric.
+Bypass password validation and create user anyway? [y/N]:
+
+------------------------------
+
+Bypass password validation and create user anyway? [y/N]: y
+
+
+Superuser created successfully.
+
+restart the server
+[command]:
+
+py manage.py runserver
+
+admin login page ( ScreenShot)
+
+if you login successfully, you will see admin dashboard
+
+-----------------------------------
+
+Create Models
+-------------
+
+app1/students/admin.py:
+
+from django.contrib import admin
+from .models import Member
+
+# Register your models here.
+admin.site.register(Member)
+
+
+check admin dashboard, you will see students tab appeared
+
+-------------------------------------
+
+from django.db import models
+
+class Member(models.Model):
+  	fullname = models.CharField(max_length=100)  
+   	address = models.CharField(max_length=200) 
+  	photo = models.ImageField(upload_to='images/')     
+	created_at = models.DateTimeField(auto_now_add=True) 
+ 
+
+  def __str__(self):
+    return f"{self.fullname}"
+
+----------------------------------
+
+Try Student Record CRUD Operations
+
+------------------------------------
+
+

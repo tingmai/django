@@ -1,0 +1,514 @@
+
+CRUD with Images
+------------------
+
+1. Create
+2. Read
+3. Update
+4. Delete
+
+------------------
+
+Project Structure
+
+app1|____ manage.py
+    |____ app1/
+         |____ __init__.py
+	 |____ settings.py
+         |____ urls.py
+         |____ wsgl.py
+
+     ____ students/
+        |____ templates
+            |____ index.html
+            |____ create.html
+            |____ edit.html
+            |____ show.html
+        |____ migrations/
+            |____ __init__.py
+        |____ __init__.py
+        |____ admin.py
+        |____ apps.py
+        |____ models.py
+        |____ tests.py
+        |____ views.py
+
+---------------------------
+config database:
+
+settings.py
+
+DATABASES = {  
+    'default': {  
+        'ENGINE': 'django.db.backends.mysql',  
+        'NAME': 'crud_db',  
+        'USER':'root',  
+        'PASSWORD':'',  
+        'HOST':'localhost',  
+        'PORT':'3306'  
+    }  
+}  
+
+-----------------------------------
+
+[command]:
+django-admin startproject app1 
+
+cd app1
+
+[command]:
+python manage.py startapp students
+
+
+
+------------------------------
+Change Settings
+
+app1/app1/settings.py:
+
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+#Static  files (CSS, JS, Images)
+STATIC_URL='/static/'
+STATICFILES_DIRS=[BASE_DIR/"static"]
+
+#Media files(uploaded user files)
+MEDIA_URL='/media'
+MEDIA_ROOT=BASE_DIR/"media"
+
+------------------------------------
+
+app1/app1/urls.py
+
+from django.contrib import admin 
+from django.urls import path, include 
+from django.conf.urls.static import static 
+from django.conf import settings 
+  
+urlpatterns = [ 
+    path('admin/', admin.site.urls), 
+    # path to redirect to your app 
+    path('', include('students.urls')), 
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+
+
+-------------------------------------------
+app1
+    |____ manage.py
+    |____ app1/
+    |____ students/
+        |____ templates/
+        |____ static/
+	     |____ mystyle.css
+             |____ myscript.js
+             |____ images
+                  |____ logo.png
+                  |____ user.png
+                  |____ banner.png
+
+------------------------------------------
+How to call static files
+
+{% load static %}
+<!DOCTYPE html>
+<html>
+<link rel="stylesheet" href="{% static 'mystyle.css' %}">
+<body>
+
+-------------------------------------------
+
+
+Create Model
+------------
+students/models.py
+
+
+from django.db import models 
+ 
+class Image(models.Model):     
+	fullname = models.CharField(max_length=100)  
+    	address = models.CharField(max_length=200)   
+	photo = models.ImageField(upload_to='images/')     
+	created_at = models.DateTimeField(auto_now_add=True) 
+     
+	def __str__(self):         
+  		return self.title
+
+---------------
+
+
+config static folder:
+
+app1/urls.py
+
+from django.conf import settings 
+from django.conf.urls.static 
+
+import static 
+urlpatterns = [     # ... your url patterns ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+
+-----------------------------------------
+
+
+
+
+Create ModelForm
+---------------
+
+students/forms.py
+
+from django import forms  
+from students.models import Student  
+class StudentForm(forms.ModelForm):  
+    class Meta:  
+        model = Student  
+        fields = "__all__" 
+
+-----------------------------------------------
+
+Create View Functions
+
+students/views.py
+-----------------
+
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Student
+from .forms import StudentForm
+
+def index(request):
+    students = Student.objects.all()
+    return render(request, 'images/index.html', {'students': students})
+
+
+
+def store(request):
+    if request.method == "POST":
+        form = ImageForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('/index')
+    else:
+        student = StudentForm()
+    return render(request, 'students/create.html', {'student': student})
+
+
+def show(request, id):
+    student = get_object_or_404(Student, id=id)
+    return render(request, 'students/show.html', {'student': student})
+
+
+def edit(request, id):
+    student = get_object_or_404(Student, id=id)
+    return render(request, 'students/edit.html', {'student': student})
+
+
+def update(request, id):
+    student = get_object_or_404(Student, id=id)
+    if request.method == "POST":
+        student = StudentForm(request.POST, request.FILES, instance=student)
+        if form.is_valid():
+            form.save()
+            return redirect('/index')
+    else:
+        student = StudentForm(instance=student)
+    return render(request, 'students/edit.html', {'student': student})
+
+def destroy(request, id):
+    student = get_object_or_404(Student, id=id)
+    if request.method == "POST":
+        student.delete()
+        return redirect('/index')
+    return render(request, 'students/index.html', {'student': student}) 
+
+-------------------------------------
+Update Project urls
+
+
+app1/urls.py
+------------
+
+from django.urls import path, include  
+urlpatterns = [     
+                path('admin/', admin.site.urls),     
+                path('', include('students.urls')), 
+              ]
+
+------------------------------------
+students/urls.py
+
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib import admin  
+from django.urls import path  
+from students import views  
+
+urlpatterns = [  
+    path('admin/', admin.site.urls),  
+    path('create', views.store),  
+    path('index',views.index),  
+    path('show/<int:id>', views.show), 
+    path('edit/<int:id>', views.edit),  
+    path('update/<int:id>', views.update),  
+    path('delete/<int:id>', views.destroy),  
+]  + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+-------------------------------
+
+students/templates/index.html
+
+index.html
+----------
+
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <title>Employee Records</title>  
+     {% load staticfiles %}  
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"/>  
+</head>  
+<body>  
+
+<div class="container text-center text-white p-5 bg-secondary">
+<h1>CRUD Example </h1>
+</div>
+<div class="container my-4">
+<a href="/create" class="btn btn-primary">Add New Record</a> 
+</div>
+
+<div class="container my-4">
+
+<table class="table table-striped table-bordered table-sm">  
+    <thead class="thead-dark">  
+    <tr>  
+        <th>Id</th>  
+        <th>Name</th>  
+        <th>Address</th>  
+	<th>Photo</th>
+        <th>Actions</th>  
+    </tr>  
+    </thead>  
+    <tbody>  
+{% for student in students %}  
+    <tr>  
+        <td>{{ student.id }}</td>  
+        <td>{{ student.fullname }}</td>  
+        <td>{{ student.address }}</td> 
+        <td>{{ student.photo }}</td>  
+        <td>  
+            <a href="/edit/{{ student.id }}"><span class="glyphicon glyphicon-pencil" >Edit</span></a>  
+            <a href="/delete/{{ student.id }}">Delete</a>  
+        </td>  
+    </tr>  
+{% endfor %}  
+    </tbody>  
+</table>  
+
+</div>
+
+</body>  
+</html>  
+
+----------------------------
+
+students/templates/create.html
+
+create.html
+-----------
+
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <title>Index</title>  
+    {% load staticfiles %}  
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"/>  
+</head>  
+<body>  
+
+<div class="container text-center text-white p-5 bg-secondary my-4">
+<h1>CRUD Example </h1>
+</div>
+
+<div class="container my-4">
+<form method="POST" class="post-form" action="/create" enctype="multipart/form-data">  
+        {% csrf_token %}  
+    <div class="container">  
+<br>  
+    <div class="form-group row">  
+    <label class="col-sm-1 col-form-label"></label>  
+    <div class="col-sm-4">  
+    <h3>Enter Student Details</h3>  
+    </div>  
+  </div>  
+     
+  <div class="form-group row">  
+    <label class="col-sm-2 col-form-label">Student Name:</label>  
+    <div class="col-sm-4">  
+      {{ form.fullname }}  
+    </div>  
+  </div> 
+
+<div class="form-group row">  
+    <label class="col-sm-2 col-form-label">Photo Upload:</label>  
+    <div class="col-sm-4">  
+      {{ form.photo }}  
+    </div>  
+  </div>  
+
+ 
+    <div class="form-group row">  
+    <label class="col-sm-2 col-form-label">Student Address:</label>  
+    <div class="col-sm-4">  
+      {{ form.address }}  
+    </div>  
+  </div>  
+    
+    <div class="form-group row">  
+    <label class="col-sm-1 col-form-label"></label>  
+    <div class="col-sm-4">  
+    <button type="submit" class="btn btn-primary">Submit</button>  
+    </div>  
+  </div>  
+    </div>  
+</form> 
+</div>
+ 
+</body>  
+</html>  
+
+--------------------------
+
+edit.html
+---------
+
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <title>Index</title>  
+    {% load staticfiles %}  
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"/>  
+</head>  
+<body>  
+
+<div class="container text-center text-white p-5 bg-secondary my-4">
+<h1>CRUD Example </h1>
+</div>
+
+<div class="container my-4">
+<form method="POST" class="post-form" action="/update/{{student.id}}">  
+        {% csrf_token %}  
+    <div class="container">  
+<br>  
+    <div class="form-group row">  
+    <label class="col-sm-1 col-form-label"></label>  
+    <div class="col-sm-4">  
+    <h3>Update Details</h3>  
+    </div>  
+  </div>  
+    
+  <div class="form-group row">  
+    <label class="col-sm-2 col-form-label">Student Name:</label>  
+    <div class="col-sm-4">  
+        <input type="text" name="fullname" id="fullname" required maxlength="100" value="{{ student.fullname }}" />  
+    </div>  
+  </div>  
+    <div class="form-group row">  
+    <label class="col-sm-2 col-form-label">Student Address:</label>  
+    <div class="col-sm-4">  
+        <input type="text" name="address" id="address" required maxlength="254" value="{{ student.address }}" />  
+    </div>  
+  </div> 
+
+<div class="form-group row">  
+    <label class="col-sm-2 col-form-label">Photo:</label>  
+    <div class="col-sm-4">  
+        <input type="file" name="photo" id="photo" required maxlength="254" value="{{ student.photo }}" />  
+    </div>  
+  </div>   
+    
+    <div class="form-group row">  
+    <label class="col-sm-1 col-form-label"></label>  
+    <div class="col-sm-4">  
+    <button type="submit" class="btn btn-success"> Update</button>  
+    </div>  
+  </div>  
+    </div>  
+</form> 
+</div>
+ 
+</body>  
+</html>  
+
+---------------------
+
+show.html
+--------
+
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <title>Index</title>  
+    {% load staticfiles %}  
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"/>  
+</head>  
+<body>  
+
+<div class="container text-center text-white p-5 bg-secondary my-4">
+<h1>CRUD Example </h1>
+</div>
+
+<div class="container my-4">
+<form>  
+
+    <div class="container">  
+<br>  
+    <div class="form-group row">  
+    <label class="col-sm-1 col-form-label"></label>  
+    <div class="col-sm-4">  
+    <h3>Student Details</h3>  
+    </div>  
+  </div>  
+     
+  <div class="form-group row">  
+    <label class="col-sm-2 col-form-label">Student Name:</label>  
+    <div class="col-sm-4">  
+      {{ form.fullname }}  
+    </div>  
+  </div>  
+    <div class="form-group row">  
+    <label class="col-sm-2 col-form-label">Student Address:</label>  
+    <div class="col-sm-4">  
+      {{ form.address }}  
+    </div>  
+  </div>  
+
+<div class="form-group row">  
+    <label class="col-sm-2 col-form-label">Photo:</label>  
+    <div class="col-sm-4">  
+      {{ form.photo }}  
+    </div>  
+  </div>  
+    
+    <div class="form-group row">  
+    <label class="col-sm-1 col-form-label"></label>  
+    <div class="col-sm-4">  
+    <button type="submit" class="btn btn-primary">Submit</button>  
+    </div>  
+  </div>  
+    </div>  
+</form> 
+</div>
+ 
+</body>  
+</html>  
+
+
